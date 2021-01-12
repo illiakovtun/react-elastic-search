@@ -1,7 +1,7 @@
-import {SET_LOADING, SET_ROLE_DEFS} from './types';
+import {SET_LOADING, SET_ROLE_DEFS, SET_SHOW_DELETED} from './types';
 import axios from 'axios';
 // @ts-ignore
-import {batch} from 'react-redux'
+import {batch} from 'react-redux';
 
 export const setRoleDefs = (roleDefs) => ({
   type: SET_ROLE_DEFS,
@@ -13,8 +13,14 @@ export const setLoading = (loading) => ({
   payload: {loading}
 });
 
-export const fetchRoleDefs = () => async (dispatch) => {
-  dispatch(setLoading(true))
+export const setShowDeleted = (showDeleted) => ({
+  type: SET_SHOW_DELETED,
+  payload: {showDeleted}
+});
+
+export const fetchRoleDefs = (showDeleted = false, search = '') => async (dispatch) => {
+  dispatch(setLoading(true));
+  dispatch(setShowDeleted(showDeleted));
 
   const response = await axios.get('http://localhost:3000/searchRoles', {
     params: {
@@ -23,13 +29,22 @@ export const fetchRoleDefs = () => async (dispatch) => {
         size: 20,
         query: {
           bool: {
-            must: [
-              {
-                term: {
-                  'entityState.itemID': 5
+            must_not: showDeleted
+              ? []
+              : [
+                {
+                  term: {
+                    'entityState.itemID': 7
+                  }
                 }
-              }
-            ]
+              ],
+            // must: [
+            //   {
+            //     term: {
+            //       'name': search,
+            //     }
+            //   }
+            // ]
           }
         }
       }),
@@ -39,10 +54,12 @@ export const fetchRoleDefs = () => async (dispatch) => {
     }
   });
 
-  console.log(response.data.hits.hits.map(el => el._source));
+  const roles = response.data.hits ? response.data.hits.hits.map(el => el._source) : []
+
+  console.log(roles);
 
   batch(() => {
-    dispatch(setRoleDefs(response.data.hits.hits.map(el => el._source)));
-    dispatch(setLoading(false))
-  })
+    dispatch(setRoleDefs(roles));
+    dispatch(setLoading(false));
+  });
 };

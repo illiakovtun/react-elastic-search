@@ -11,6 +11,7 @@ export default class RoleDefComponent extends React.Component {
    * Render the component to the DOM
    * @returns {}
    */
+
   render() {
     return <RoleListComponent/>;
   }

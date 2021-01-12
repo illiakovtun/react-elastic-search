@@ -76,7 +76,9 @@ module.exports = {
           {
             loader: 'css-loader',
             options: {
-              modules: true,
+              modules: {
+                localIdentName: "[flexbox-wrap]__[local]--[hash:base64:5]"
+              },
               importLoaders: 1,
               sourceMap: false,
             }

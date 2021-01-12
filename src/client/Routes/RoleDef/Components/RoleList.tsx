@@ -44,11 +44,12 @@ const CommonStyle = require('../../../Theme/ListTheme.scss');
 
 type MapStateToPropsType = {
   loading: boolean,
-  roleDefs: RoleListState[]
+  roleDefs: RoleListState[],
+  showDeleted: boolean
 }
 
 type MapStateToDispatchType = {
-  fetchRoleDefs: () => void
+  fetchRoleDefs: (showDeleted?: boolean) => void
 }
 
 class RoleListComponent extends React.Component<MapStateToDispatchType & MapStateToPropsType & RoleListProp> {
@@ -89,13 +90,13 @@ class RoleListComponent extends React.Component<MapStateToDispatchType & MapStat
       label: 'ID',
       key: 'id',
       sortBy: 'id',
-      style: {width: '120px'}
+      style: {width: '150px'}
     },
     {
       label: 'Name',
       key: 'name',
       sortBy: 'name',
-      style: {width: '160px'}
+      style: {width: '200px'}
     }, {
       label: 'Description',
       key: 'description',
@@ -113,19 +114,11 @@ class RoleListComponent extends React.Component<MapStateToDispatchType & MapStat
     }, {
       label: 'Type',
       key: 'allowedMemberTypes',
-      style: {width: '215px'},
+      style: {width: '250px'},
       sortBy: 'allowedMemberTypes',
       injectBody: (value: IRoleDef) => getAllowedMemberType(value.allowedMemberTypes)
     }
   ];
-
-  // function needs to be called on onChange for checkBox
-  private bulkOptions = () => {
-    return [
-      {
-        content: <Checkbox label={'Show Deleted'}/>
-      }];
-  };
 
   constructor(props) {
     super(props);
@@ -163,6 +156,7 @@ class RoleListComponent extends React.Component<MapStateToDispatchType & MapStat
     const {
       roleDefs,
       loading,
+      showDeleted,
       theme
     } = this.props;
 
@@ -172,11 +166,11 @@ class RoleListComponent extends React.Component<MapStateToDispatchType & MapStat
     );
 
     return (
-      <FlexBox>
+      <FlexBox justify={'Center'}>
         <Column medium="4-4">
           {
             loading ?
-              <div className={theme.spinnerContainer}>
+              <div className={theme.spinnerContainer} style={{opacity: 0.5}}>
                 <DrawerSpinner componentClass={theme.espinner} spinnerText="Loading Roles"/>
               </div> : null
           }
@@ -196,14 +190,15 @@ class RoleListComponent extends React.Component<MapStateToDispatchType & MapStat
                   disclosure={true}
                   onClick={(event: React.FormEvent<HTMLElement>) => this.toggleDropdown(event,
                     'bulkAction')}
-                  disabled={!bulkAction.selectedRow.length}>
+                  // disabled={!bulkAction.selectedRow.length
+                >
                   Bulk Actions {bulkAction.selectedRow.length
                   ? `(${bulkAction.selectedRow.length})`
                   : ''}
                 </Button>
 
                 <Dropdown
-                  dropdownItems={[]}
+                  dropdownItems={[{content: 'fdj'}]}
                   anchorEl={dropdownEle.bulkAction}
                   preferredAlignment="left"
                 />
@@ -211,7 +206,6 @@ class RoleListComponent extends React.Component<MapStateToDispatchType & MapStat
 
               <div className={searchFieldStyle}>
                 <TextField
-                  disabled
                   label="Find a Role..."
                   suffix={<Icon source="search" componentColor="inkLighter"/>}
                   value={filterConfig.searchKey}
@@ -220,20 +214,28 @@ class RoleListComponent extends React.Component<MapStateToDispatchType & MapStat
 
               <div className={theme.commonLeftMargin}>
                 <Button
-                  disabled={actionInProgress}
                   componentSize="large"
                   icon="horizontalDots"
-                  onClick={(event: React.FormEvent<HTMLElement>) => this.toggleDropdown(event,
-                    'filter')}/>
-
+                  onClick={(event: React.FormEvent<HTMLElement>) => {
+                    this.toggleDropdown(event, 'filter');
+                  }}
+                />
                 <Dropdown
-                  dropdownItems={this.bulkOptions()}
+                  closeOnClickOption={false}
+                  dropdownItems={[
+                    {
+                      content: <Checkbox
+                        checked={showDeleted} label={'Show Deleted'}
+                        onChange={(newValue) => {
+                          this.props.fetchRoleDefs(newValue);
+                        }}/>
+                    }
+                  ]}
                   anchorEl={dropdownEle.filter}
                   preferredAlignment="right"
                 />
               </div>
             </FlexBox>
-
             {
               roleDefs ?
                 <Table
@@ -262,7 +264,8 @@ class RoleListComponent extends React.Component<MapStateToDispatchType & MapStat
 
 const mapStateToProps = (state) => ({
   loading: state.loading,
-  roleDefs: state.roleDefs
+  roleDefs: state.roleDefs,
+  showDeleted: state.showDeleted
 });
 
 export default compose(
