@@ -37,6 +37,13 @@ import {
   fetchWithShowDeleted,
   toggleSelectedRow
 } from '../../../store/roleDefs/actions';
+import {
+  getRoleDefsList,
+  getRoleDefsLoading, getRoleDefsSearch, getRoleDefsSelectedRows,
+  getRoleDefsShowDeleted
+} from '../../../store/roleDefs/selectors';
+import {values} from 'mobx';
+import {useEffect} from 'react';
 
 const baseTheme = require('../Styles/RoleList.scss');
 const TableStyle = require('../../../Theme/Table.scss');
@@ -61,7 +68,6 @@ type MapStateToDispatchType = {
   fetchWithShowDeleted: (showDeleted: boolean) => void,
   toggleSelectedRow: (selectedRows: number[]) => void
 }
-
 class RoleListComponent extends React.Component<MapStateToDispatchType & MapStateToPropsType & RoleListProp> {
   sortQuery: string = '[{"id":{"order":"desc"}}]';
   /*
@@ -285,11 +291,11 @@ class RoleListComponent extends React.Component<MapStateToDispatchType & MapStat
 }
 
 const mapStateToProps = (state) => ({
-  loading: state.loading,
-  roleDefs: state.roleDefs,
-  showDeleted: state.showDeleted,
-  search: state.search,
-  selectedRows: state.selectedRows
+  loading: getRoleDefsLoading(state),
+  roleDefs: getRoleDefsList(state),
+  showDeleted: getRoleDefsShowDeleted(state),
+  search: getRoleDefsSearch(state),
+  selectedRows: getRoleDefsSelectedRows(state)
 });
 
 export default compose(

@@ -32,21 +32,21 @@ export const setSearch = (search: string) => ({
   payload: {search}
 });
 
-export const toggleSelectedRow = (selectedRows) => ({
+export const toggleSelectedRow = (selectedRows: number[]) => ({
   type: SET_SELECTED_ROW,
   payload: {selectedRows}
-});
+})
 
 const debounceSearch = debounce(() => {
   store.dispatch(fetchRoleDefs());
 }, 200);
 
-export const fetchWithSearch = (search) => (dispatch, getState) => {
+export const fetchWithSearch = (search: string) => (dispatch) => {
   dispatch(setSearch(search));
   debounceSearch();
 };
 
-export const fetchWithShowDeleted = (showDeleted) => (dispatch) => {
+export const fetchWithShowDeleted = (showDeleted: boolean) => (dispatch) => {
   dispatch(setShowDeleted(showDeleted));
   dispatch(fetchRoleDefs());
 };
@@ -86,10 +86,8 @@ export const fetchRoleDefs = () => async (dispatch, getState) => {
       }
     }
   });
-  console.log(response.data);
-  const roles = response.data.hits ? response.data.hits.hits.map(el => el._source) : [];
 
-  console.log(roles);
+  const roles = response.data.hits ? response.data.hits.hits.map(el => el._source) : [];
 
   batch(() => {
     dispatch(setRoleDefs(roles));
