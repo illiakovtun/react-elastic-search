@@ -34,9 +34,9 @@ import {connect} from 'react-redux';
 import {
   fetchRoleDefs,
   fetchWithSearch,
-  fetchWithShowDeleted
+  fetchWithShowDeleted,
+  toggleSelectedRow
 } from '../../../store/roleDefs/actions';
-import { debounce } from 'debounce';
 
 const baseTheme = require('../Styles/RoleList.scss');
 const TableStyle = require('../../../Theme/Table.scss');
@@ -51,13 +51,15 @@ type MapStateToPropsType = {
   loading: boolean,
   roleDefs: RoleListState[],
   showDeleted: boolean,
-  search: string
+  search: string,
+  selectedRows: number[]
 }
 
 type MapStateToDispatchType = {
   fetchRoleDefs: () => void,
   fetchWithSearch: (search: string) => void,
-  fetchWithShowDeleted: (showDeleted: boolean) => void
+  fetchWithShowDeleted: (showDeleted: boolean) => void,
+  toggleSelectedRow: (selectedRows: number[]) => void
 }
 
 class RoleListComponent extends React.Component<MapStateToDispatchType & MapStateToPropsType & RoleListProp> {
@@ -93,16 +95,19 @@ class RoleListComponent extends React.Component<MapStateToDispatchType & MapStat
     loadingRole: false,
     nestedChildData: []
   };
+
   private nestedColumnConfig: Array<{}> = [
     {
       label: 'ID',
       key: 'id',
       sortBy: 'id',
+      sort: true,
       style: {width: '150px'}
     },
     {
       label: 'Name',
       key: 'name',
+      sort: true,
       sortBy: 'name',
       style: {width: '200px'}
     }, {
@@ -114,6 +119,7 @@ class RoleListComponent extends React.Component<MapStateToDispatchType & MapStat
       label: 'Status',
       key: 'entityState',
       style: {width: '120px'},
+      sort: true,
       sortBy: 'entityState',
       injectBody: (value: IRoleDef) =>
         <Badge working={value.processing}
@@ -123,6 +129,7 @@ class RoleListComponent extends React.Component<MapStateToDispatchType & MapStat
       label: 'Type',
       key: 'allowedMemberTypes',
       style: {width: '250px'},
+      sort: true,
       sortBy: 'allowedMemberTypes',
       injectBody: (value: IRoleDef) => getAllowedMemberType(value.allowedMemberTypes)
     }
@@ -133,8 +140,8 @@ class RoleListComponent extends React.Component<MapStateToDispatchType & MapStat
   }
 
   // Callback function when any row gets selected
-  handleSelectRowCallback = (val: React.ReactText[]) => {
-
+  handleSelectRowCallback = (selectedRows: number[]) => {
+    this.props.toggleSelectedRow(selectedRows)
   };
 
   // Toggle dropdowns present in this component
@@ -166,7 +173,8 @@ class RoleListComponent extends React.Component<MapStateToDispatchType & MapStat
       loading,
       showDeleted,
       theme,
-      search
+      search,
+      selectedRows
     } = this.props;
 
     const searchFieldStyle = classNames(
@@ -199,15 +207,15 @@ class RoleListComponent extends React.Component<MapStateToDispatchType & MapStat
                   disclosure={true}
                   onClick={(event: React.FormEvent<HTMLElement>) => this.toggleDropdown(event,
                     'bulkAction')}
-                  // disabled={!bulkAction.selectedRow.length
+                  disabled={!selectedRows.length}
                 >
-                  Bulk Actions {bulkAction.selectedRow.length
-                  ? `(${bulkAction.selectedRow.length})`
+                  Bulk Actions {selectedRows.length
+                  ? `(${selectedRows.length})`
                   : ''}
                 </Button>
 
                 <Dropdown
-                  dropdownItems={[{content: 'fdj'}]}
+                  dropdownItems={[{content: 'Bulk Actions'}]}
                   anchorEl={dropdownEle.bulkAction}
                   preferredAlignment="left"
                 />
@@ -219,7 +227,7 @@ class RoleListComponent extends React.Component<MapStateToDispatchType & MapStat
                   suffix={<Icon source="search" componentColor="inkLighter"/>}
                   value={search}
                   onChange={(newValue) => {
-                    this.props.fetchWithSearch(newValue)
+                    this.props.fetchWithSearch(newValue);
                   }}
                 />
               </div>
@@ -255,12 +263,14 @@ class RoleListComponent extends React.Component<MapStateToDispatchType & MapStat
                   columnFirstChildWidth="25px"
                   hideRow={hideRow}
                   bordered={true}
-                  highlight={true}
+                  checkedRowsId={selectedRows}
+                  highlight
                   sorting="all"
                   data={roleDefs}
                   column={this.nestedColumnConfig}
                   filterData={filterConfig}
                   rowAction={[]}
+                  responsive
                   rowCallbackValue="id"
                   selectRow="checkbox"
                   selectRowCallback={this.handleSelectRowCallback}
@@ -278,11 +288,12 @@ const mapStateToProps = (state) => ({
   loading: state.loading,
   roleDefs: state.roleDefs,
   showDeleted: state.showDeleted,
-  search: state.search
+  search: state.search,
+  selectedRows: state.selectedRows
 });
 
 export default compose(
   connect<MapStateToPropsType, MapStateToDispatchType, {}>(mapStateToProps,
-    {fetchRoleDefs, fetchWithSearch, fetchWithShowDeleted}),
+    {fetchRoleDefs, fetchWithSearch, fetchWithShowDeleted, toggleSelectedRow}),
   themr(ROLE, baseTheme)
 )(RoleListComponent);

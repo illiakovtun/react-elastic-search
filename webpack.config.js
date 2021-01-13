@@ -13,7 +13,6 @@ const CleanWebpackPlugin = require('clean-webpack-plugin');
 const outputDirectory = 'dist';
 
 module.exports = {
-
   resolveLoader: {
     alias: {
       "shopify-icons-loader": path.join(__dirname, "./config/webpack/SvgToJsonPlugin.js")
@@ -76,6 +75,10 @@ module.exports = {
           {
             loader: 'css-loader',
             options: {
+              modules: {
+                localIdentName: "my-name-[name]__[local]--[hash:base64:5]",
+                auto: true
+              },
               importLoaders: 1,
               sourceMap: false,
             }
@@ -110,19 +113,19 @@ module.exports = {
         ],
       },
       {
-          test: /\.svg$/,
-          use: [
-            {
-              loader: 'svg-react-loader',
-            }
-          ]
+        test: /\.svg$/,
+        use: [
+          {
+            loader: 'svg-react-loader',
+          }
+        ]
       },
       {
-          test: /\.(jpe?g|png|gif)$/i,
-          loaders: [
-              'file-loader?hash=sha512&digest=hex&name=[hash].[ext]',
-              'image-webpack-loader?bypassOnDebug=false'
-          ]
+        test: /\.(jpe?g|png|gif)$/i,
+        loaders: [
+          'file-loader?hash=sha512&digest=hex&name=[hash].[ext]',
+          'image-webpack-loader?bypassOnDebug=false'
+        ]
       },
       // {
       //   test: /engage-ui+[/\\].+\.scss/,

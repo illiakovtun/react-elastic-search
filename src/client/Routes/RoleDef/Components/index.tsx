@@ -13,6 +13,7 @@ export default class RoleDefComponent extends React.Component {
    */
 
   render() {
+    // @ts-ignore
     return <RoleListComponent/>;
   }
 }
