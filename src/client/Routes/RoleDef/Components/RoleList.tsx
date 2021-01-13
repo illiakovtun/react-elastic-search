@@ -31,7 +31,12 @@ import {RoleListProp} from './RoleListProp';
 import {ROLE} from '../../../ThemeIdentifiers';
 import {compose} from 'redux';
 import {connect} from 'react-redux';
-import {fetchRoleDefs} from '../../../store/roleDefs/actions';
+import {
+  fetchRoleDefs,
+  fetchWithSearch,
+  fetchWithShowDeleted
+} from '../../../store/roleDefs/actions';
+import { debounce } from 'debounce';
 
 const baseTheme = require('../Styles/RoleList.scss');
 const TableStyle = require('../../../Theme/Table.scss');
@@ -45,11 +50,14 @@ const CommonStyle = require('../../../Theme/ListTheme.scss');
 type MapStateToPropsType = {
   loading: boolean,
   roleDefs: RoleListState[],
-  showDeleted: boolean
+  showDeleted: boolean,
+  search: string
 }
 
 type MapStateToDispatchType = {
-  fetchRoleDefs: (showDeleted?: boolean) => void
+  fetchRoleDefs: () => void,
+  fetchWithSearch: (search: string) => void,
+  fetchWithShowDeleted: (showDeleted: boolean) => void
 }
 
 class RoleListComponent extends React.Component<MapStateToDispatchType & MapStateToPropsType & RoleListProp> {
@@ -157,7 +165,8 @@ class RoleListComponent extends React.Component<MapStateToDispatchType & MapStat
       roleDefs,
       loading,
       showDeleted,
-      theme
+      theme,
+      search
     } = this.props;
 
     const searchFieldStyle = classNames(
@@ -208,7 +217,10 @@ class RoleListComponent extends React.Component<MapStateToDispatchType & MapStat
                 <TextField
                   label="Find a Role..."
                   suffix={<Icon source="search" componentColor="inkLighter"/>}
-                  value={filterConfig.searchKey}
+                  value={search}
+                  onChange={(newValue) => {
+                    this.props.fetchWithSearch(newValue)
+                  }}
                 />
               </div>
 
@@ -227,7 +239,7 @@ class RoleListComponent extends React.Component<MapStateToDispatchType & MapStat
                       content: <Checkbox
                         checked={showDeleted} label={'Show Deleted'}
                         onChange={(newValue) => {
-                          this.props.fetchRoleDefs(newValue);
+                          this.props.fetchWithShowDeleted(newValue);
                         }}/>
                     }
                   ]}
@@ -265,10 +277,12 @@ class RoleListComponent extends React.Component<MapStateToDispatchType & MapStat
 const mapStateToProps = (state) => ({
   loading: state.loading,
   roleDefs: state.roleDefs,
-  showDeleted: state.showDeleted
+  showDeleted: state.showDeleted,
+  search: state.search
 });
 
 export default compose(
-  connect<MapStateToPropsType, MapStateToDispatchType, {}>(mapStateToProps, {fetchRoleDefs}),
+  connect<MapStateToPropsType, MapStateToDispatchType, {}>(mapStateToProps,
+    {fetchRoleDefs, fetchWithSearch, fetchWithShowDeleted}),
   themr(ROLE, baseTheme)
 )(RoleListComponent);

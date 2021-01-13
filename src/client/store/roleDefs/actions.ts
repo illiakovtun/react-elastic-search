@@ -1,7 +1,9 @@
-import {SET_LOADING, SET_ROLE_DEFS, SET_SHOW_DELETED} from './types';
+import {SET_LOADING, SET_ROLE_DEFS, SET_SEARCH, SET_SHOW_DELETED} from './types';
 import axios from 'axios';
 // @ts-ignore
 import {batch} from 'react-redux';
+import {debounce} from 'debounce';
+import store from '../store';
 
 export const setRoleDefs = (roleDefs) => ({
   type: SET_ROLE_DEFS,
@@ -18,9 +20,27 @@ export const setShowDeleted = (showDeleted) => ({
   payload: {showDeleted}
 });
 
-export const fetchRoleDefs = (showDeleted = false, search = '') => async (dispatch) => {
-  dispatch(setLoading(true));
+export const setSearch = (search) => ({
+  type: SET_SEARCH,
+  payload: {search}
+});
+
+const debounceSearch = debounce(() => {
+  store.dispatch(fetchRoleDefs());
+}, 200);
+
+export const fetchWithSearch = (search) => (dispatch, getState) => {
+  dispatch(setSearch(search));
+  debounceSearch();
+};
+
+export const fetchWithShowDeleted = (showDeleted) => (dispatch) => {
   dispatch(setShowDeleted(showDeleted));
+  dispatch(fetchRoleDefs());
+};
+
+export const fetchRoleDefs = () => async (dispatch, getState) => {
+  dispatch(setLoading(true));
 
   const response = await axios.get('http://localhost:3000/searchRoles', {
     params: {
@@ -29,7 +49,15 @@ export const fetchRoleDefs = (showDeleted = false, search = '') => async (dispat
         size: 20,
         query: {
           bool: {
-            must_not: showDeleted
+            must: [
+              {
+                query_string: {
+                  query: `*${getState().search}*`,
+                  fields: ['name', 'description']
+                }
+              }
+            ],
+            must_not: getState().showDeleted
               ? []
               : [
                 {
@@ -37,14 +65,7 @@ export const fetchRoleDefs = (showDeleted = false, search = '') => async (dispat
                     'entityState.itemID': 7
                   }
                 }
-              ],
-            // must: [
-            //   {
-            //     term: {
-            //       'name': search,
-            //     }
-            //   }
-            // ]
+              ]
           }
         }
       }),
@@ -53,8 +74,8 @@ export const fetchRoleDefs = (showDeleted = false, search = '') => async (dispat
       }
     }
   });
-
-  const roles = response.data.hits ? response.data.hits.hits.map(el => el._source) : []
+  console.log(response.data);
+  const roles = response.data.hits ? response.data.hits.hits.map(el => el._source) : [];
 
   console.log(roles);
 
